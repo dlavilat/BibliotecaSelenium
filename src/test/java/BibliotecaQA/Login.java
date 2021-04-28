@@ -1,75 +1,36 @@
 package BibliotecaQA;
 
-import org.hamcrest.core.StringContains;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
 
+import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 
-public class Login {
+@RunWith(JUnitParamsRunner.class)
+public class Login extends Autenticacion {
 	
-	private WebDriver driver;
-
+	
+	public Login(){
+		super();
+	}
+	
 	/*
 	 * Developer: Diana Lucia Avila 
 	 * Date: April-26-2021 
 	 * Email: diluavila@gmail.com
-	 * Description: Instancia el web driver en la variable driver para utilizarlo en
-	 * toda la clase. Se maximiza en chrome y carga la url de la bliblioteca
+	 * Description: Se llama al método padre que construye el ChromeDriver y
+	 * accede a la url de la biblioteca.
 	 */
 	@Before
-	public void setUp() {
-
-		System.setProperty("webdriver.chrome.driver", "src/test/resources/chromedriver/chromedriver.exe");
-
-		driver = new ChromeDriver();
-		driver.manage().window().maximize();
-		driver.get("http://bibliotecaqa.s3-website-us-east-1.amazonaws.com/");
+	public void configurar() {
+		inicializar();
 	}
-	
-	/*
-	 * Developer: Diana Lucia Avila 
-	 * Date: April-26-2021 
-	 * Email: diluavila@gmail.com
-	 * Description: Instancia el web driver en la variable driver para utilizarlo en
-	 * toda la clase. Se maximiza en chrome y carga la url de la bliblioteca
-	 */
-	public void opcionLogin() {
-		WebElement menuLogin = driver.findElement(By.xpath("//*[@id=\"navbarText\"]/ul/li[2]/a"));
-		menuLogin.click();
-				
-	}
-	
-	/*
-	 * Developer: Diana Lucia Avila 
-	 * Date: April-26-2021 
-	 * Email: diluavila@gmail.com
-	 * Description: Este método, recibe como parámetros la data que retorna el
-	 * método dataExitoso, con el fin de ejecutar el flujo con esos datos y probar
-	 * su respuesta para validar si realmente se obtuvo la respuesta esperada para
-	 * los casos positivos.
-	 */
-	@Test
-	@Parameters(method = "dataExitoso")
-	public void loginExitoso( String corr, String cont) {
 		
-		opcionLogin();	
-		ingresoLogin(corr, cont);
-
-		String respuesta = driver.findElement(By.xpath("//*[@id=\"msg\"]/div")).getText();
-		System.out.println("respuesta: " + respuesta);
-
-		Assert.assertThat(respuesta, StringContains.containsString("Bienvenido"));
-		driver.quit();
-	}
-	
 	/*
 	 * Developer: Diana Lucia Avila 
 	 * Date: April-26-2021 
@@ -84,6 +45,7 @@ public class Login {
 		return new Object[][] { { "c@c.com", "Prueba.123" } };
 	}
 	
+	
 	/*
 	 * Developer: Diana Lucia Avila 
 	 * Date: April-26-2021 
@@ -92,17 +54,41 @@ public class Login {
 	 * método dataExitoso, con el fin de ejecutar el flujo con esos datos y probar
 	 * su respuesta para validar si realmente se obtuvo la respuesta esperada para
 	 * los casos positivos.
+	 * Se realiza el flujo completo desde el registro hasta el login.
 	 */
-	@Test(expected = NoSuchElementException.class)
+	@Test
+	@Parameters(method = "dataExitoso")
+	public void loginExitoso( String corr, String cont) {
+		seleccionarOpcionRegistro();
+		llenarFormularioRegistro("Diana", "Avila", corr, "2222222222", cont);
+		seleccionarOpcionLogin();	
+		llenarFormularioLogin(corr, cont);
+		Boolean isDisplayed = driver.findElement(By.cssSelector(".alert-success")).isDisplayed();
+		
+		Assert.assertTrue(isDisplayed);
+		driver.close();
+	}
+	
+	
+	
+	/*
+	 * Developer: Diana Lucia Avila 
+	 * Date: April-26-2021 
+	 * Email: diluavila@gmail.com
+	 * Description: Este método, recibe como parámetros la data que retorna el
+	 * método dataNoExitoso, con el fin de ejecutar el flujo con esos datos y probar
+	 * su respuesta para validar si realmente se obtuvo la respuesta esperada para
+	 * los casos positivos.
+	 */
+	@Test
 	@Parameters(method = "dataNoExitoso")
 	public void loginNoExitoso( String corr, String cont) {
-				
-		ingresoLogin(corr, cont);
-
-		String respuesta = driver.findElement(By.xpath("//*[@id=\"msg\"]/div")).getText();
-		System.out.println("respuesta: " + respuesta);
-
-		driver.quit();
+		seleccionarOpcionLogin();
+		llenarFormularioLogin(corr, cont);
+		Boolean isDisplayed = driver.findElement(By.cssSelector(".alert-warning")).isDisplayed();
+		
+		Assert.assertTrue(isDisplayed);
+		driver.close();
 	}
 	
 	/*
@@ -127,23 +113,26 @@ public class Login {
 	 * Description: Método que identifica los componentes del formulario del
 	 * login de usuario y realiza el flujo de diligenciamiento para iniciar sesión.
 	 */
-	public void ingresoLogin(String corr, String cont) {
-		
+	public void llenarFormularioLogin(String corr, String cont) {
 		WebElement correo = driver.findElement(By.xpath("//*[@id=\"email\"]"));
 		WebElement contrasena = driver.findElement(By.cssSelector("input[id=password]"));
 		WebElement btnIniciaSesion = driver.findElement(By.id("login"));
 		
 		correo.sendKeys(corr);
 		contrasena.sendKeys(cont);
+		
 		btnIniciaSesion.click();
 	}
 	
-	
-	
+	/*
+	 * Developer: Diana Lucia Avila 
+	 * Date: April-26-2021 
+	 * Email: diluavila@gmail.com
+	 * Description: Cierra el proceso del webdriver
+	 */
 	@After
   	public void tearDown(){
          	System.out.println("----We're now closing our test----");
          	driver.quit();
    	}
-
 }
